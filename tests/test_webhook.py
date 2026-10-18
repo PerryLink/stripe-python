@@ -226,6 +226,23 @@ class TestWebhookSignature(object):
             DUMMY_WEBHOOK_PAYLOAD, header, DUMMY_WEBHOOK_SECRET
         )
 
+    @pytest.mark.parametrize(
+        "encode",
+        [lambda p: p.encode("utf-8"), lambda p: bytearray(p, "utf-8")],
+        ids=["bytes", "bytearray"],
+    )
+    def test_generate_signature_header_for_binary_payload(self, encode):
+        timestamp = 1234567890
+        header = WebhookSignature.generate_signature_header(
+            encode(DUMMY_WEBHOOK_PAYLOAD), DUMMY_WEBHOOK_SECRET, timestamp
+        )
+        assert WebhookSignature.verify_header(
+            encode(DUMMY_WEBHOOK_PAYLOAD), header, DUMMY_WEBHOOK_SECRET
+        )
+        assert header == WebhookSignature.generate_signature_header(
+            DUMMY_WEBHOOK_PAYLOAD, DUMMY_WEBHOOK_SECRET, timestamp
+        )
+
 
 class TestStripeClientConstructEvent(object):
     def test_construct_event(self, stripe_mock_stripe_client):
